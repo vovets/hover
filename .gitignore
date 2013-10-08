@@ -1,3 +1,14 @@
 .metadata
 .cproject
 .project
+*.[oa]
+*.bin
+*.elf
+*.hex
+*.lss
+*.map
+*.sym
+*.eep
+*.lst
+*~
+.dep/
