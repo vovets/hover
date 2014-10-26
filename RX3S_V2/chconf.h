@@ -240,7 +240,7 @@
  * @note    The default is @p TRUE.
  */
 #if !defined(CH_USE_MESSAGES) || defined(__DOXYGEN__)
-#define CH_USE_MESSAGES                 FALSE
+#define CH_USE_MESSAGES                 TRUE
 #endif
 
 /**
@@ -380,7 +380,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_DBG_ENABLE_ASSERTS) || defined(__DOXYGEN__)
-#define CH_DBG_ENABLE_ASSERTS           FALSE
+#define CH_DBG_ENABLE_ASSERTS           TRUE
 #endif
 
 /**
@@ -417,7 +417,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(CH_DBG_FILL_THREADS) || defined(__DOXYGEN__)
-#define CH_DBG_FILL_THREADS             FALSE
+#define CH_DBG_FILL_THREADS             TRUE
 #endif
 
 /**

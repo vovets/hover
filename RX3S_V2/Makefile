@@ -60,7 +60,9 @@ TARGET = ch
 # Object files directory
 #     To put object files in current directory, use a dot (.), do NOT make
 #     this an empty or blank macro!
-OBJDIR = .
+BUILDDIR = build
+OBJDIR = $(BUILDDIR)/obj
+LSTDIR = $(BUILDDIR)/lst
 
 
 # Imported source files
@@ -71,6 +73,8 @@ include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/ports/GCC/AVR/port.mk
 include $(CHIBIOS)/os/kernel/kernel.mk
 
+VPATH=$(CHIBIOS)
+
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(PORTSRC) \
       $(KERNSRC) \
@@ -78,7 +82,9 @@ SRC = $(PORTSRC) \
       $(HALSRC) \
       $(PLATFORMSRC) \
       $(BOARDSRC) \
-      main.c
+      test1.c \
+      halt.c \
+      cobs.c
 #      $(CHIBIOS)/os/various/evtimer.c \
 #      $(CHIBIOS)/os/various/chprintf.c \
 
@@ -164,7 +170,7 @@ CFLAGS += -Wstrict-prototypes
 #CFLAGS += -Wundef
 #CFLAGS += -Wunreachable-code
 #CFLAGS += -Wsign-compare
-CFLAGS += -Wa,-adhlns=$(<:%.c=$(OBJDIR)/%.lst)
+CFLAGS += -Wa,-adhlns=$(<:$(CHIBIOS)/%.c=$(LSTDIR)/%.lst)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 CFLAGS += $(CSTANDARD)
 
@@ -308,6 +314,7 @@ AVRDUDE_FLAGS += $(AVRDUDE_NO_VERIFY)
 AVRDUDE_FLAGS += $(AVRDUDE_VERBOSE)
 AVRDUDE_FLAGS += $(AVRDUDE_ERASE_COUNTER)
 #AVRDUDE_FLAGS += -b 57600
+#AVRDUDE_FLAGS += -B 0.5
 
 
 #---------------- Debugging Options ----------------
@@ -381,11 +388,12 @@ MSG_CREATING_LIBRARY = Creating library:
 
 
 # Define all object files.
-OBJ = $(SRC:%.c=$(OBJDIR)/%.o) $(CPPSRC:%.cpp=$(OBJDIR)/%.o) $(ASRC:%.S=$(OBJDIR)/%.o)
+OBJ = $(subst $(CHIBIOS),$(OBJDIR),$(SRC:%.c=%.o) $(CPPSRC:%.cpp=%.o) $(ASRC:%.S=%.o))
+OBJDIRS = $(sort $(dir $(OBJ)))
 
 # Define all listing files.
-LST = $(SRC:%.c=$(OBJDIR)/%.lst) $(CPPSRC:%.cpp=$(OBJDIR)/%.lst) $(ASRC:%.S=$(OBJDIR)/%.lst)
-
+LST = $(subst $(CHIBIOS),$(LSTDIR),$(SRC:%.c=%.lst) $(CPPSRC:%.cpp=%.lst) $(ASRC:%.S=%.lst))
+LSTDIRS = $(sort $(dir $(LST)))
 
 # Compiler flags to generate dependency files.
 GENDEPFLAGS = -MMD -MP -MF .dep/$(@F).d
@@ -405,8 +413,16 @@ ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 all: begin gccversion sizebefore build sizeafter end
 
 # Change the build target to build a HEX file or a library.
-build: elf hex bin eep lss sym
+build: $(OBJ) elf hex bin eep lss sym
 #build: lib
+
+$(OBJ): | $(OBJDIRS) $(LSTDIRS)
+
+$(OBJDIRS):
+	mkdir -p $@
+
+$(LSTDIRS):
+	mkdir -p $@
 
 
 elf: $(TARGET).elf
@@ -596,29 +612,13 @@ $(OBJDIR)/%.o : %.S
 
 
 # Target: clean project.
-clean: begin clean_list end
+clean: begin do_clean end
 
-clean_list :
+do_clean:
 	@echo
 	@echo $(MSG_CLEANING)
-	$(REMOVE) $(TARGET).hex
-	$(REMOVE) $(TARGET).bin
-	$(REMOVE) $(TARGET).eep
-	$(REMOVE) $(TARGET).cof
-	$(REMOVE) $(TARGET).elf
-	$(REMOVE) $(TARGET).map
-	$(REMOVE) $(TARGET).sym
-	$(REMOVE) $(TARGET).lss
-	$(REMOVE) $(SRC:%.c=$(OBJDIR)/%.o)
-	$(REMOVE) $(SRC:%.c=$(OBJDIR)/%.lst)
-	$(REMOVE) $(SRC:.c=.s)
-	$(REMOVE) $(SRC:.c=.d)
-	$(REMOVE) $(SRC:.c=.i)
+	$(REMOVEDIR) $(BUILDDIR)
 	$(REMOVEDIR) .dep
-
-
-# Create object files directory
-$(shell mkdir $(OBJDIR) 2>/dev/null)
 
 
 # Include the dependency files.
