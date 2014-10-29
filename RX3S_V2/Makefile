@@ -54,7 +54,7 @@ FORMAT = ihex
 
 
 # Target file name (without extension).
-TARGET = ch
+TARGET_NAME = ch
 
 
 # Object files directory
@@ -63,6 +63,8 @@ TARGET = ch
 BUILDDIR = build
 OBJDIR = $(BUILDDIR)/obj
 LSTDIR = $(BUILDDIR)/lst
+DEPDIR = $(BUILDDIR)/dep
+TARGET = $(BUILDDIR)/$(TARGET_NAME)
 
 
 # Imported source files
@@ -82,9 +84,7 @@ SRC = $(PORTSRC) \
       $(HALSRC) \
       $(PLATFORMSRC) \
       $(BOARDSRC) \
-      test1.c \
-      halt.c \
-      cobs.c
+      main.c
 #      $(CHIBIOS)/os/various/evtimer.c \
 #      $(CHIBIOS)/os/various/chprintf.c \
 
@@ -170,7 +170,7 @@ CFLAGS += -Wstrict-prototypes
 #CFLAGS += -Wundef
 #CFLAGS += -Wunreachable-code
 #CFLAGS += -Wsign-compare
-CFLAGS += -Wa,-adhlns=$(<:$(CHIBIOS)/%.c=$(LSTDIR)/%.lst)
+CFLAGS += -Wa,-adhlns=$(patsubst %,$(LSTDIR)/%,$(patsubst $(CHIBIOS)/%,%,$(<:%.c=%.lst)))
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 CFLAGS += $(CSTANDARD)
 
@@ -197,7 +197,7 @@ CFLAGS += -Wundef
 #CPPFLAGS += -Wstrict-prototypes
 #CPPFLAGS += -Wunreachable-code
 #CPPFLAGS += -Wsign-compare
-CPPFLAGS += -Wa,-adhlns=$(<:%.cpp=$(OBJDIR)/%.lst)
+CPPFLAGS += -Wa,-adhlns=$(patsubst %,$(LSTDIR)/%,$(patsubst $(CHIBIOS)/%,%,$(<:%.cpp=%.lst)))
 CPPFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 #CPPFLAGS += $(CSTANDARD)
 
@@ -211,7 +211,7 @@ CPPFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 #             files -- see avr-libc docs [FIXME: not yet described there]
 #  -listing-cont-lines: Sets the maximum number of continuation lines of hex
 #       dump that will be displayed for a given single line of source input.
-ASFLAGS = $(ADEFS) -Wa,-adhlns=$(<:%.S=$(OBJDIR)/%.lst),-gstabs,--listing-cont-lines=100
+ASFLAGS = $(ADEFS) -Wa,-adhlns=$(patsubst %,$(LSTDIR)/%,$(patsubst $(CHIBIOS)/%,%,$(<:%.S=%.lst))),-gstabs,--listing-cont-lines=100
 
 
 #---------------- Library Options ----------------
@@ -388,15 +388,19 @@ MSG_CREATING_LIBRARY = Creating library:
 
 
 # Define all object files.
-OBJ = $(subst $(CHIBIOS),$(OBJDIR),$(SRC:%.c=%.o) $(CPPSRC:%.cpp=%.o) $(ASRC:%.S=%.o))
+OBJ = $(patsubst %,$(OBJDIR)/%,$(patsubst $(CHIBIOS)/%,%,$(SRC:%.c=%.o) $(CPPSRC:%.cpp=%.o) $(ASRC:%.S=%.o)))
 OBJDIRS = $(sort $(dir $(OBJ)))
 
 # Define all listing files.
-LST = $(subst $(CHIBIOS),$(LSTDIR),$(SRC:%.c=%.lst) $(CPPSRC:%.cpp=%.lst) $(ASRC:%.S=%.lst))
+LST = $(patsubst $(OBJDIR)/%,$(LSTDIR)/%,$(OBJ))
 LSTDIRS = $(sort $(dir $(LST)))
 
+DEP = $(patsubst %,$(DEPDIR)/%,$(patsubst $(CHIBIOS)/%,%,$(SRC:%.c=%.d) $(CPPSRC:%.cpp=%.d)))
+DEPDIRS = $(sort $(dir $(DEP)))
+
+
 # Compiler flags to generate dependency files.
-GENDEPFLAGS = -MMD -MP -MF .dep/$(@F).d
+GENDEPFLAGS = -MMD -MP -MF $(DEPDIR)/$(patsubst $(OBJDIR)/%.o,%.d,$(@))
 
 
 # Combine all necessary flags and optional flags.
@@ -416,12 +420,15 @@ all: begin gccversion sizebefore build sizeafter end
 build: $(OBJ) elf hex bin eep lss sym
 #build: lib
 
-$(OBJ): | $(OBJDIRS) $(LSTDIRS)
+$(OBJ): | $(OBJDIRS) $(LSTDIRS) $(DEPDIRS)
 
 $(OBJDIRS):
 	mkdir -p $@
 
 $(LSTDIRS):
+	mkdir -p $@
+
+$(DEPDIRS):
 	mkdir -p $@
 
 
@@ -581,6 +588,15 @@ $(OBJDIR)/%.o : %.c
 	@echo $(MSG_COMPILING) $<
 	$(CC) -c $(ALL_CFLAGS) $< -o $@
 
+# cancel implicit rules
+%.o : %.c
+
+%.o : %.cpp
+
+%.o : %.s
+
+%.o : %.S
+
 
 # Compile: create object files from C++ source files.
 $(OBJDIR)/%.o : %.cpp
@@ -590,25 +606,25 @@ $(OBJDIR)/%.o : %.cpp
 
 
 # Compile: create assembler files from C source files.
-%.s : %.c
-	$(CC) -S $(ALL_CFLAGS) $< -o $@
+# %.s : %.c
+# 	$(CC) -S $(ALL_CFLAGS) $< -o $@
 
 
 # Compile: create assembler files from C++ source files.
-%.s : %.cpp
-	$(CC) -S $(ALL_CPPFLAGS) $< -o $@
+# %.s : %.cpp
+# 	$(CC) -S $(ALL_CPPFLAGS) $< -o $@
 
 
 # Assemble: create object files from assembler source files.
-$(OBJDIR)/%.o : %.S
-	@echo
-	@echo $(MSG_ASSEMBLING) $<
-	$(CC) -c $(ALL_ASFLAGS) $< -o $@
+# $(OBJDIR)/%.o : %.S
+# 	@echo
+# 	@echo $(MSG_ASSEMBLING) $<
+# 	$(CC) -c $(ALL_ASFLAGS) $< -o $@
 
 
 # Create preprocessed source for use in sending a bug report.
-%.i : %.c
-	$(CC) -E -mmcu=$(MCU) -I. $(CFLAGS) $< -o $@
+# %.i : %.c
+# 	$(CC) -E -mmcu=$(MCU) -I. $(CFLAGS) $< -o $@
 
 
 # Target: clean project.
@@ -618,11 +634,9 @@ do_clean:
 	@echo
 	@echo $(MSG_CLEANING)
 	$(REMOVEDIR) $(BUILDDIR)
-	$(REMOVEDIR) .dep
-
 
 # Include the dependency files.
--include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
+-include $(DEP)
 
 
 # Listing of phony targets.
