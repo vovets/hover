@@ -1,5 +1,7 @@
 # Hey Emacs, this is a -*- makefile -*-
 #----------------------------------------------------------------------------
+# common rules for building binaries of hover project
+# based on Makefile: 
 # WinAVR Makefile Template written by Eric B. Weddington, J�rg Wunsch, et al.
 #
 # Released to the Public Domain
@@ -39,6 +41,8 @@
 # To rebuild project do "make clean" then "make all".
 #----------------------------------------------------------------------------
 
+BASEDIR = $(realpath ../..)
+
 
 # MCU name
 MCU = atmega168p
@@ -53,8 +57,8 @@ F_CPU = 16000000
 FORMAT = ihex
 
 
-# Target file name (without extension).
-TARGET_NAME = ch
+# MUST BE DEFINED: Target file name (without extension).
+#TARGET_NAME = ch
 
 
 # Object files directory
@@ -68,45 +72,37 @@ TARGET = $(BUILDDIR)/$(TARGET_NAME)
 
 
 # Imported source files
-CHIBIOS = ../chibios
-include $(CHIBIOS)/boards/RX3S_V2/board.mk
+CHIBIOS = $(BASEDIR)/chibios
+include $(BASEDIR)/RX3S_V2/board/board.mk
 include $(CHIBIOS)/os/hal/platforms/AVR/platform.mk
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/ports/GCC/AVR/port.mk
 include $(CHIBIOS)/os/kernel/kernel.mk
 
-VPATH=$(CHIBIOS)
+VPATH = $(BASEDIR)
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(PORTSRC) \
+SRC += $(PORTSRC) \
       $(KERNSRC) \
       $(TESTSRC) \
       $(HALSRC) \
       $(PLATFORMSRC) \
-      $(BOARDSRC) \
-      main.c
-#      $(CHIBIOS)/os/various/evtimer.c \
-#      $(CHIBIOS)/os/various/chprintf.c \
+      $(BOARDSRC)
 
-
-# List C++ source files here. (C dependencies are automatically generated.)
-CPPSRC =
-
-
-# List Assembler source files here.
+# MUST BE DEFINED: List Assembler source files here.
 #     Make them always end in a capital .S.  Files ending in a lowercase .s
 #     will not be considered source files but generated files (assembler
 #     output from the compiler), and will be deleted upon "make clean"!
 #     Even though the DOS/Win* filesystem matches both .s and .S the same,
 #     it will preserve the spelling of the filenames, and gcc itself does
 #     care about how the name is spelled on its command-line.
-ASRC =
+#ASRC =
 
 
-# Optimization level, can be [0, 1, 2, 3, s].
+# MUST BE DEFINED: Optimization level, can be [0, 1, 2, 3, s].
 #     0 = turn off optimization. s = optimize for size.
 #     (Note: 3 is not always the best optimization level. See avr-libc FAQ.)
-OPT = s
+#OPT = s
 
 
 # Debugging format.
@@ -120,9 +116,10 @@ DEBUG = dwarf-2
 #     Each directory must be seperated by a space.
 #     Use forward slashes for directory separators.
 #     For a directory that has spaces, enclose it in quotes.
-EXTRAINCDIRS = $(PORTINC) $(KERNINC) $(TESTINC) \
+EXTRAINCDIRS += $(PORTINC) $(KERNINC) $(TESTINC) \
                $(HALINC) $(PLATFORMINC) $(BOARDINC) \
-               $(CHIBIOS)/os/various
+               $(CHIBIOS)/os/various \
+               $(BASEDIR)/RX3S_V2/common
 
 
 # Compiler flag to set the C Standard level.
@@ -170,7 +167,7 @@ CFLAGS += -Wstrict-prototypes
 #CFLAGS += -Wundef
 #CFLAGS += -Wunreachable-code
 #CFLAGS += -Wsign-compare
-CFLAGS += -Wa,-adhlns=$(patsubst %,$(LSTDIR)/%,$(patsubst $(CHIBIOS)/%,%,$(<:%.c=%.lst)))
+CFLAGS += -Wa,-adhlns=$(patsubst %,$(LSTDIR)/%,$(patsubst $(BASEDIR)/%,%,$(<:%.c=%.lst)))
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 CFLAGS += $(CSTANDARD)
 
@@ -197,7 +194,7 @@ CFLAGS += -Wundef
 #CPPFLAGS += -Wstrict-prototypes
 #CPPFLAGS += -Wunreachable-code
 #CPPFLAGS += -Wsign-compare
-CPPFLAGS += -Wa,-adhlns=$(patsubst %,$(LSTDIR)/%,$(patsubst $(CHIBIOS)/%,%,$(<:%.cpp=%.lst)))
+CPPFLAGS += -Wa,-adhlns=$(patsubst %,$(LSTDIR)/%,$(patsubst $(BASEDIR)/%,%,$(<:%.cpp=%.lst)))
 CPPFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 #CPPFLAGS += $(CSTANDARD)
 
@@ -211,7 +208,7 @@ CPPFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 #             files -- see avr-libc docs [FIXME: not yet described there]
 #  -listing-cont-lines: Sets the maximum number of continuation lines of hex
 #       dump that will be displayed for a given single line of source input.
-ASFLAGS = $(ADEFS) -Wa,-adhlns=$(patsubst %,$(LSTDIR)/%,$(patsubst $(CHIBIOS)/%,%,$(<:%.S=%.lst))),-gstabs,--listing-cont-lines=100
+ASFLAGS = $(ADEFS) -Wa,-adhlns=$(patsubst %,$(LSTDIR)/%,$(patsubst $(BASEDIR)/%,%,$(<:%.S=%.lst))),-gstabs,--listing-cont-lines=100
 
 
 #---------------- Library Options ----------------
@@ -388,14 +385,14 @@ MSG_CREATING_LIBRARY = Creating library:
 
 
 # Define all object files.
-OBJ = $(patsubst %,$(OBJDIR)/%,$(patsubst $(CHIBIOS)/%,%,$(SRC:%.c=%.o) $(CPPSRC:%.cpp=%.o) $(ASRC:%.S=%.o)))
+OBJ = $(patsubst %,$(OBJDIR)/%,$(patsubst $(BASEDIR)/%,%,$(SRC:%.c=%.o) $(CPPSRC:%.cpp=%.o) $(ASRC:%.S=%.o)))
 OBJDIRS = $(sort $(dir $(OBJ)))
 
 # Define all listing files.
 LST = $(patsubst $(OBJDIR)/%,$(LSTDIR)/%,$(OBJ))
 LSTDIRS = $(sort $(dir $(LST)))
 
-DEP = $(patsubst %,$(DEPDIR)/%,$(patsubst $(CHIBIOS)/%,%,$(SRC:%.c=%.d) $(CPPSRC:%.cpp=%.d)))
+DEP = $(patsubst %,$(DEPDIR)/%,$(patsubst $(BASEDIR)/%,%,$(SRC:%.c=%.d) $(CPPSRC:%.cpp=%.d)))
 DEPDIRS = $(sort $(dir $(DEP)))
 
 
