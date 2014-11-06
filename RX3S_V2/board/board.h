@@ -25,7 +25,7 @@
  * Board identifier.
  */
 #define BOARD_ARDUINO
-#define BOARD_NAME "Arduino"
+#define BOARD_NAME "RX3S_V2"
 
 /* All inputs with pull-ups */
 #define VAL_DDRA  0x00

@@ -90,11 +90,16 @@ static SerialConfig serialConfig = {
 };
 
 static WORKING_AREA(waTestThread, 32);
+
 __attribute__((noreturn))
 static msg_t TestThread(void* arg) {
 	while (TRUE) {
-	    palTogglePad(IOPORT2, PORTB_LED1);
-	    sendHello();
+	    /* palTogglePad(IOPORT2, PORTB_LED1); */
+	    /* sendHello(); */
+        /* chThdSleepMilliseconds(2000); */
+	    palSetPad(IOPORT2, PORTB_LED1);
+        chThdSleepMilliseconds(500);
+        palClearPad(IOPORT2, PORTB_LED1);
 	    chThdSleepMilliseconds(500);
 	}
 	chThdExit(0);
@@ -104,16 +109,16 @@ int main(void) {
 	halInit();
 	chSysInit();
 	palClearPad(IOPORT2, PORTB_LED1);
-	sdStart(&SD1, &serialConfig);
+	/* sdStart(&SD1, &serialConfig); */
 	//	recv_thread = chThdCreateStatic(waRecvThread, sizeof(waRecvThread), NORMALPRIO, RecvThread, NULL);
 	//	send_thread = chThdCreateStatic(waSendThread, sizeof(waSendThread), NORMALPRIO, SendThread, NULL);
 	test_thread = chThdCreateStatic(waTestThread, sizeof(waTestThread), NORMALPRIO, TestThread, NULL);
 
-	chThdSetPriority(IDLEPRIO);
+	/* chThdSetPriority(IDLEPRIO); */
 	while (TRUE) {
-	    palSetPad(IOPORT2, PORTB_LED1);
-	    //	    chThdSleepMilliseconds(500);
-	    //	    palClearPad(IOPORT2, PORTB_LED1);
-	    chThdSleepMilliseconds(500);
+	    /* palSetPad(IOPORT2, PORTB_LED1); */
+        chThdSleepMilliseconds(500);
+        /* palClearPad(IOPORT2, PORTB_LED1); */
+	    /* chThdYield(); */
 	}
 }

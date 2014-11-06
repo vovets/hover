@@ -1,0 +1,6 @@
+CA-50 pinout
+------------
+yellow GND
+white  RX
+blue   TX
+

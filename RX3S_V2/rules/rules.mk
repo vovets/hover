@@ -594,7 +594,6 @@ $(OBJDIR)/%.o : %.c
 
 %.o : %.S
 
-
 # Compile: create object files from C++ source files.
 $(OBJDIR)/%.o : %.cpp
 	@echo
@@ -620,8 +619,8 @@ $(OBJDIR)/%.o : %.cpp
 
 
 # Create preprocessed source for use in sending a bug report.
-# %.i : %.c
-# 	$(CC) -E -mmcu=$(MCU) -I. $(CFLAGS) $< -o $@
+%.i : %.c
+	$(CC) -E $(ALL_CFLAGS) $< -o $@
 
 
 # Target: clean project.
