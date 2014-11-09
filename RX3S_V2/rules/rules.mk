@@ -167,6 +167,7 @@ CFLAGS += -Wstrict-prototypes
 #CFLAGS += -Wundef
 #CFLAGS += -Wunreachable-code
 #CFLAGS += -Wsign-compare
+CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -Wa,-adhlns=$(patsubst %,$(LSTDIR)/%,$(patsubst $(BASEDIR)/%,%,$(<:%.c=%.lst)))
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 CFLAGS += $(CSTANDARD)
@@ -270,7 +271,7 @@ LDFLAGS += $(EXTMEMOPTS)
 LDFLAGS += $(patsubst %,-L%,$(EXTRALIBDIRS))
 LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)
 #LDFLAGS += -T linker_script.x
-
+LDFLAGS += -Wl,--gc-sections
 
 
 #---------------- Programming Options (avrdude) ----------------

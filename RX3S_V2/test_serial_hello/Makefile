@@ -28,7 +28,8 @@ TARGET_NAME = test_serial_hello
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC = main.c \
-	  RX3S_V2/common/idle_thread.c
+	  RX3S_V2/common/idle_thread.c \
+	  RX3S_V2/common/packet.c
 
 # List C++ source files here. (C dependencies are automatically generated.)
 CPPSRC =

@@ -1,3 +1,3 @@
 #pragma once
 
-void idle_thread(void);
+void idleThread(void);

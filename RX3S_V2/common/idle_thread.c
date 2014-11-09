@@ -1,6 +1,6 @@
 #include "ch.h"
 
-void idle_thread(void) {
+void idleThread(void) {
     chRegSetThreadName("idle");
     while (TRUE) {
         port_wait_for_interrupt();

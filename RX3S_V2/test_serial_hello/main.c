@@ -1,27 +1,24 @@
 #include "ch.h"
 #include "hal.h"
 #include "idle_thread.h"
+#include "packet.h"
 
-#include "serial.h"
+#include <string.h>
 
 
-static Thread* test_thread;
-
-void sendPacket(const uint8_t* packet, size_t size);
-
-void sendPacket(const uint8_t* packet, size_t size)
-{
-    for (uint8_t i = 0; i < size; ++i) {
-        sdPut(&SD1, packet[i]);
-    }
-}
+PACKET_POOL_DEFS;
 
 void sendHello(void);
 
 void sendHello()
 {
-    uint8_t message_buffer[] = "Hello!\n";
-    sendPacket(message_buffer, 7);
+    uint8_t hello[] = "Hello,\n";
+    uint8_t packets[] = "packets!\n";
+    Packet* p = packetAlloc(7, hello);
+    packetSend(p);
+    p = packetAlloc(9, NULL);
+    memcpy(p->data, packets, 9);
+    packetSend(p);
 }
 
 static SerialConfig serialConfig = {
@@ -32,7 +29,7 @@ static SerialConfig serialConfig = {
 static WORKING_AREA(waTestThread, 32);
 
 __attribute__((noreturn))
-static msg_t TestThread(void* arg) {
+static msg_t testThread(void* arg) {
 	while (TRUE) {
 	    palSetPad(IOPORT2, PORTB_LED1);
 	    sendHello();
@@ -46,9 +43,10 @@ int main(void) {
 	halInit();
 	chSysInit();
 	palClearPad(IOPORT2, PORTB_LED1);
+    packetInitPool();
 	sdStart(&SD1, &serialConfig);
-	test_thread = chThdCreateStatic(waTestThread, sizeof(waTestThread), NORMALPRIO, TestThread, NULL);
+	chThdCreateStatic(waTestThread, sizeof(waTestThread), NORMALPRIO, testThread, NULL);
 
 	chThdSetPriority(IDLEPRIO);
-    idle_thread();
+    idleThread();
 }
