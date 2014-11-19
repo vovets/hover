@@ -5,6 +5,7 @@
 
 extern uint8_t packetPoolArena[];
 extern MemoryPool packetPool;
+extern Semaphore packetPoolSem;
 
 void packetInitPool()
 {
@@ -17,6 +18,7 @@ void packetInitPool()
 Packet* packetAlloc(uint8_t size, uint8_t* data)
 {
     chDbgCheck(size <= PACKET_MAX_SIZE, "packetAlloc");
+    chSemWait(&packetPoolSem);
     uint8_t* buffer = (uint8_t*)chPoolAlloc(&packetPool);
     Packet* retval = (Packet*)buffer;
     retval->size = size;
@@ -31,9 +33,10 @@ Packet* packetAlloc(uint8_t size, uint8_t* data)
 void packetFree(Packet* packet)
 {
     chPoolFree(&packetPool, packet);
+    chSemSignal(&packetPoolSem);
 }
 
-void packetSend(Packet* packet)
+void packetSendAndFree(Packet* packet)
 {
     for (uint8_t i = 0; i < packet->size; ++i) {
         sdPut(&SD1, packet->data[i]);

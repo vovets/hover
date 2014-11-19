@@ -18,6 +18,7 @@ typedef struct {
 
 #define PACKET_POOL_DEFS \
     MEMORYPOOL_DECL(packetPool, PACKET_BUFFER_SIZE, NULL);  \
+    SEMAPHORE_DECL(packetPoolSem, MAX_PACKETS); \
     uint8_t packetPoolArena[PACKET_BUFFER_SIZE * MAX_PACKETS]
 
 void packetInitPool(void);
