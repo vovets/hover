@@ -1,5 +1,6 @@
 import sys
 import serial
+import time
 
 
 class CobsDecodeError(Exception):
@@ -50,19 +51,35 @@ class PacketDecoder:
     def process_byte(self, b):
         self.state(b)
 
+
+def cobs_recv():
+    def process_packet(packet):
+        # print(packet)
+        print(cobs_decode(packet))
+
+    with serial.Serial("/dev/rfcomm0", 115200) as ser:
+        d = PacketDecoder(process_packet)
+        while True:
+            b = ser.read()[0]
+            #print(b)
+            d.process_byte(b)
+
+def send_packets():
+    with serial.Serial("/dev/rfcomm0", 115200) as ser:
+        first = True
+        for p in range(0,100):
+            bs = []
+            for b in range(1, p + 2):
+                bs.append(b)
+            if first:
+                ser.write(bytes([0]))
+                first = False
+            ser.write(bytes(bs))
+            ser.write(bytes([0]))
+            time.sleep(0.05)
                 
 def main():
     try:
-        def process_packet(packet):
-            # print(packet)
-            print(cobs_decode(packet))
-
-        with serial.Serial("/dev/rfcomm0", 115200) as ser:
-            d = PacketDecoder(process_packet)
-            while True:
-                b = ser.read()[0]
-                #print(b)
-                d.process_byte(b)
-
+        send_packets()
     except KeyboardInterrupt:
         pass

@@ -2,7 +2,9 @@
 
 #include "packetconf.h"
 
-#include "ch.h"
+#include <stdint.h>
+
+typedef struct SerialDriver SerialDriver;
 
 // These definitions must be provided in packetconf.h
 //
@@ -21,10 +23,10 @@ typedef struct {
     SEMAPHORE_DECL(packetPoolSem, MAX_PACKETS); \
     uint8_t packetPoolArena[PACKET_BUFFER_SIZE * MAX_PACKETS]
 
-void packetInitPool(void);
+void packetPoolInit(void);
 
 Packet* packetAlloc(uint8_t size, uint8_t* data);
 
-void packetSendAndFree(Packet* packet);
+void packetSendAndFree(SerialDriver* sd, Packet* packet);
 
 void packetFree(Packet* packet);
