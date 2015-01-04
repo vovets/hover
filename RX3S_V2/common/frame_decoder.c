@@ -1,8 +1,9 @@
 #include "frame_decoder.h"
 
-#include <stddef.h>
+#include <hal.h>
+#include <serial.h>
 
-uint16_t framingErrors = 0;
+#include <stddef.h>
 
 void frameDecoderStateWaitSync(FrameDecoder* decoder, uint8_t byte);
 void frameDecoderStateWaitData(FrameDecoder* decoder, uint8_t byte);
@@ -29,13 +30,15 @@ void frameDecoderStateReadData(FrameDecoder* decoder, uint8_t byte)
 {
     if (byte == 0x00) {
         decoder->state = &frameDecoderStateWaitData;
+        ++decoder->receivedPackets;
+        decoder->packet->seq = decoder->receivedPackets;
         decoder->processPacketCallback(decoder->packet);
         decoder->packet = NULL;
         return;
     }
     
     if (decoder->packet->size == PACKET_MAX_SIZE) {
-        ++framingErrors;
+        ++decoder->framingErrors;
         packetFree(decoder->packet);
         decoder->packet = NULL;
         decoder->state = &frameDecoderStateWaitSync;
@@ -50,6 +53,8 @@ void frameDecoderInit(FrameDecoder* decoder, ProcessPacket callback)
     decoder->state = &frameDecoderStateWaitSync;
     decoder->processPacketCallback = callback;
     decoder->packet = NULL;
+    decoder->framingErrors = 0;
+    decoder->receivedPackets = 0;
 }
 
 void frameDecoderFini(FrameDecoder* decoder)

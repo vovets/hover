@@ -1,0 +1,4 @@
+Extensive testing (manual) revealed the following.
+There must be a delay of about 5 ms betweeen consequtive packets sent.
+Time needed to process a packet may be greater than the time to receive small (1-16 byte) packet. Without delay that leads to receiving thread being blocked for too long and some bytes eventually lost.
+Increasing number of packets buffered between receiving and sending threads helps to mediate the problem, but memory cost is too high.

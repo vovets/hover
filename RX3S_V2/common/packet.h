@@ -13,6 +13,7 @@ typedef struct SerialDriver SerialDriver;
 
 typedef struct {
     uint8_t size;
+    uint16_t seq;
     uint8_t* data;
 } Packet;
 
@@ -30,3 +31,5 @@ Packet* packetAlloc(uint8_t size, uint8_t* data);
 void packetSendAndFree(SerialDriver* sd, Packet* packet);
 
 void packetFree(Packet* packet);
+
+void packetPrintf(Packet* packet, const char* format, ...);

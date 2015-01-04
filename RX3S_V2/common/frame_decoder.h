@@ -11,9 +11,9 @@ typedef struct FrameDecoderT {
     ProcessByte state;
     ProcessPacket processPacketCallback;
     Packet* packet;
+    uint16_t framingErrors;
+    uint16_t receivedPackets;
 } FrameDecoder;
-
-uint16_t framingErrors;
 
 // ownership ot the packet transferred to callback
 void frameDecoderInit(FrameDecoder* decoder, ProcessPacket callback);

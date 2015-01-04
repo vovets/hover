@@ -3,6 +3,9 @@ import serial
 import time
 
 
+# SERIAL_DEV = "/dev/rfcomm0"
+SERIAL_DEV = "/dev/ttyUSB0"
+
 class CobsDecodeError(Exception):
     pass
 
@@ -57,26 +60,31 @@ def cobs_recv():
         # print(packet)
         print(cobs_decode(packet))
 
-    with serial.Serial("/dev/rfcomm0", 115200) as ser:
+    with serial.Serial(SERIAL_DEV, 115200) as ser:
         d = PacketDecoder(process_packet)
         while True:
             b = ser.read()[0]
             #print(b)
             d.process_byte(b)
 
+def send_packet(dev, packet):
+    bs = [0]
+    bs.extend(packet)
+    bs.append(0)
+    dev.write(bytes(bs))
+
 def send_packets():
-    with serial.Serial("/dev/rfcomm0", 115200) as ser:
-        first = True
-        for p in range(0,100):
+    with serial.Serial(SERIAL_DEV, 115200) as ser:
+        no = 1
+        for l in range(1,35):
             bs = []
-            for b in range(1, p + 2):
+            bs.append(no)
+            for b in range(1, l):
                 bs.append(b)
-            if first:
-                ser.write(bytes([0]))
-                first = False
-            ser.write(bytes(bs))
-            ser.write(bytes([0]))
-            time.sleep(0.05)
+            send_packet(ser, bs)
+            print(bs)
+            time.sleep(0.005)
+            no += 1
                 
 def main():
     try:
